@@ -62,10 +62,10 @@ export default function Layout({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadUser();
+   onAuthStateChanged();
   }, []);
 
-  const loadUser = async () => {
+  const onAuthStateChanged = async () => {
     try {
       const currentUser = await User.me();
       setUser(currentUser);
