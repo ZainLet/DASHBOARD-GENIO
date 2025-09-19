@@ -1,17 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User } from "@/entities/User";
+import { auth, db } from "../src/firebaseConfig";
+import { onAuthStateChanged } from "firebase/auth";
+import { collection, query, where, getDocs, Timestamp } from "firebase/firestore";
+
 import { 
-  Users, 
-  Bot, 
-  Target, 
-  ExternalLink,
-  TrendingUp,
-  Activity,
-  Calendar,
-  BarChart3,
-  GitBranch
+  Users, Bot, Target, ExternalLink, TrendingUp, Activity, Calendar, BarChart3, GitBranch
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +18,6 @@ const navigationCards = [
     icon: Users,
     url: createPageUrl("Influencers"),
     gradient: "from-emerald-500 to-teal-600",
-    stats: "15 Ativos"
   },
   {
     title: "CRM Pipeline",
@@ -31,7 +25,6 @@ const navigationCards = [
     icon: GitBranch,
     url: createPageUrl("CRM"),
     gradient: "from-indigo-500 to-purple-600",
-    stats: "8 Em negociação"
   },
   {
     title: "Farm de Perfis",
@@ -39,7 +32,6 @@ const navigationCards = [
     icon: Bot,
     url: createPageUrl("Farm"),
     gradient: "from-blue-500 to-cyan-600",
-    stats: "8 Perfis"
   },
   {
     title: "Rotina & Metas",
@@ -47,7 +39,6 @@ const navigationCards = [
     icon: Target,
     url: createPageUrl("Assistant"),
     gradient: "from-purple-500 to-pink-600",
-    stats: "80% Hoje"
   },
   {
     title: "Ponto",
@@ -55,30 +46,94 @@ const navigationCards = [
     icon: ExternalLink,
     url: "https://genioponto.netlify.app/",
     gradient: "from-orange-500 to-red-600",
-    stats: "Externa",
     external: true
   }
 ];
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
+  const [stats, setStats] = useState({
+    influencersAtivos: 0,
+    comentariosHoje: 0,
+    metasConcluidas: '0%',
+    proximasPostagens: 0
+  });
+  const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
-    loadUser();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        if (currentUser) {
+            fetchStats();
+        } else {
+            setLoading(false);
+        }
+    });
+
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    
+    return () => {
+        unsubscribe();
+        clearInterval(timer);
+    };
   }, []);
 
-  const loadUser = async () => {
+  const fetchStats = async () => {
+    setLoading(true);
     try {
-      const currentUser = await User.me();
-      setUser(currentUser);
-    } catch (error) {
-      console.error("Erro ao carregar usuário");
-    }
-  };
+      // 1. Influenciadores Ativos
+      const influencersQuery = query(collection(db, "influencers"), where("status", "==", "ativo"));
+      const influencersSnap = await getDocs(influencersQuery);
+      
+      // 2. Comentários Hoje
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
 
+      const commentsQuery = query(
+        collection(db, "farm_comments"), 
+        where("data", ">=", Timestamp.fromDate(today)),
+        where("data", "<", Timestamp.fromDate(tomorrow))
+      );
+      const commentsSnap = await getDocs(commentsQuery);
+      
+      // 3. Metas Concluídas (exemplo, pode precisar de ajuste)
+      const progressSnap = await getDocs(collection(db, "assistant_progress"));
+      let metasConcluidas = '0%';
+      if (!progressSnap.empty) {
+        const progress = progressSnap.docs[0].data();
+        const totalMetas = Object.keys(progress.checklist || {}).length;
+        const concluidas = Object.values(progress.checklist || {}).filter(Boolean).length;
+        if(totalMetas > 0) {
+            metasConcluidas = `${Math.round((concluidas / totalMetas) * 100)}%`;
+        }
+      }
+      
+      // 4. Próximas Postagens (exemplo, busca em follow_ups)
+      const proximos7dias = new Date();
+      proximos7dias.setDate(proximos7dias.getDate() + 7);
+      const postagensQuery = query(
+        collection(db, "follow_ups"), 
+        where("nextActionDate", ">=", Timestamp.fromDate(new Date())),
+        where("nextActionDate", "<=", Timestamp.fromDate(proximos7dias))
+      );
+      const postagensSnap = await getDocs(postagensQuery);
+
+      setStats({
+        influencersAtivos: influencersSnap.size,
+        comentariosHoje: commentsSnap.size,
+        metasConcluidas: metasConcluidas,
+        proximasPostagens: postagensSnap.size
+      });
+
+    } catch (error) {
+      console.error("Erro ao carregar estatísticas:", error);
+    }
+    setLoading(false);
+  };
+  
   const getGreeting = () => {
     const hour = currentTime.getHours();
     if (hour < 12) return "Bom dia";
@@ -101,7 +156,7 @@ export default function Dashboard() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-400 via-cyan-400 to-purple-400 bg-clip-text text-transparent mb-3">
-                {getGreeting()}, {user?.full_name || 'Usuário'}!
+                {getGreeting()}, {user?.displayName || 'Usuário'}!
               </h1>
               <p className="text-xl text-slate-300">
                 Bem-vindo ao seu centro de comando
@@ -110,17 +165,10 @@ export default function Dashboard() {
             
             <div className="flex flex-col items-end text-right">
               <div className="text-2xl font-bold text-slate-200">
-                {currentTime.toLocaleTimeString('pt-BR', { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
+                {currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
               </div>
               <div className="text-slate-400">
-                {currentTime.toLocaleDateString('pt-BR', { 
-                  weekday: 'long',
-                  day: '2-digit',
-                  month: 'long'
-                })}
+                {currentTime.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
               </div>
             </div>
           </div>
@@ -130,61 +178,38 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
           <Card className="bg-slate-800/50 backdrop-blur-xl border-slate-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">
-                Influenciadores Ativos
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-400">Influenciadores Ativos</CardTitle>
               <TrendingUp className="h-4 w-4 text-emerald-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-200">15</div>
-              <p className="text-xs text-slate-400">
-                +2 desde ontem
-              </p>
+              <div className="text-2xl font-bold text-slate-200">{loading ? '...' : stats.influencersAtivos}</div>
             </CardContent>
           </Card>
-
           <Card className="bg-slate-800/50 backdrop-blur-xl border-slate-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">
-                Comentários Hoje
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-400">Comentários Hoje</CardTitle>
               <Activity className="h-4 w-4 text-blue-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-200">127</div>
-              <p className="text-xs text-slate-400">
-                Meta: 150/dia
-              </p>
+              <div className="text-2xl font-bold text-slate-200">{loading ? '...' : stats.comentariosHoje}</div>
             </CardContent>
           </Card>
-
           <Card className="bg-slate-800/50 backdrop-blur-xl border-slate-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">
-                Metas Concluídas
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-400">Metas Concluídas</CardTitle>
               <BarChart3 className="h-4 w-4 text-purple-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-200">80%</div>
-              <p className="text-xs text-slate-400">
-                4 de 5 metas
-              </p>
+              <div className="text-2xl font-bold text-slate-200">{loading ? '...' : stats.metasConcluidas}</div>
             </CardContent>
           </Card>
-
           <Card className="bg-slate-800/50 backdrop-blur-xl border-slate-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-400">
-                Próximas Postagens
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-400">Próximas Postagens</CardTitle>
               <Calendar className="h-4 w-4 text-orange-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-slate-200">8</div>
-              <p className="text-xs text-slate-400">
-                Nos próximos 7 dias
-              </p>
+              <div className="text-2xl font-bold text-slate-200">{loading ? '...' : stats.proximasPostagens}</div>
             </CardContent>
           </Card>
         </div>
@@ -197,44 +222,23 @@ export default function Dashboard() {
               className="group relative overflow-hidden bg-slate-800/30 backdrop-blur-xl border-slate-700 hover:border-slate-600 transition-all duration-500 hover:scale-105 hover:shadow-2xl"
             >
               <div className={`absolute inset-0 bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
-              
               <CardHeader className="relative z-10">
-                <div className="flex items-center justify-between">
-                  <div className={`p-3 rounded-xl bg-gradient-to-r ${card.gradient} shadow-lg`}>
+                  <div className={`p-3 rounded-xl bg-gradient-to-r ${card.gradient} shadow-lg w-fit`}>
                     <card.icon className="w-6 h-6 text-white" />
                   </div>
-                  <span className="text-xs text-slate-400 font-medium">
-                    {card.stats}
-                  </span>
-                </div>
               </CardHeader>
-
               <CardContent className="relative z-10">
-                <h3 className="text-xl font-bold text-slate-200 mb-2 group-hover:text-white transition-colors">
-                  {card.title}
-                </h3>
-                <p className="text-slate-400 text-sm mb-6 group-hover:text-slate-300 transition-colors">
-                  {card.description}
-                </p>
-
+                <h3 className="text-xl font-bold text-slate-200 mb-2 group-hover:text-white transition-colors">{card.title}</h3>
+                <p className="text-slate-400 text-sm mb-6 group-hover:text-slate-300 transition-colors">{card.description}</p>
                 {card.external ? (
-                  <a 
-                    href={card.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block w-full"
-                  >
-                    <Button 
-                      className={`w-full bg-gradient-to-r ${card.gradient} hover:opacity-90 text-white font-semibold transition-all duration-300 hover:shadow-lg`}
-                    >
+                  <a href={card.url} target="_blank" rel="noopener noreferrer" className="block w-full">
+                    <Button className={`w-full bg-gradient-to-r ${card.gradient} hover:opacity-90 text-white font-semibold transition-all duration-300 hover:shadow-lg`}>
                       Acessar <ExternalLink className="w-4 h-4 ml-2" />
                     </Button>
                   </a>
                 ) : (
                   <Link to={card.url} className="block w-full">
-                    <Button 
-                      className={`w-full bg-gradient-to-r ${card.gradient} hover:opacity-90 text-white font-semibold transition-all duration-300 hover:shadow-lg`}
-                    >
+                    <Button className={`w-full bg-gradient-to-r ${card.gradient} hover:opacity-90 text-white font-semibold transition-all duration-300 hover:shadow-lg`}>
                       Acessar
                     </Button>
                   </Link>
@@ -243,12 +247,10 @@ export default function Dashboard() {
             </Card>
           ))}
         </div>
-
-        {/* Footer Info */}
+        
+        {/* Footer */}
         <div className="mt-12 text-center">
-          <p className="text-slate-500 text-sm">
-            Gênio IA © 2024 - Sistema de Gestão Inteligente
-          </p>
+            <p className="text-slate-500 text-sm">Gênio IA © 2024 - Sistema de Gestão Inteligente</p>
         </div>
       </div>
     </div>

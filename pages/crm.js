@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DragDropContext } from '@hello-pangea/dnd';
-import { Influencer } from '@/entities/Influencer';
-import { FollowUp } from '@/entities/FollowUp';
-import { User } from '@/entities/User';
+import { db, auth } from "../src/firebaseConfig";
+import { collection, getDocs, doc, updateDoc, addDoc } from "firebase/firestore";
+
 import KanbanColumn from '../components/crm/KanbanColumn';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,121 +25,114 @@ export default function CRM() {
   const [user, setUser] = useState(null);
   const [columns, setColumns] = useState({});
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [followUpsData, influencersData, userData] = await Promise.all([
-        FollowUp.list(),
-        Influencer.list(),
-        User.me()
-      ]);
-      setFollowUps(followUpsData);
-      setInfluencers(influencersData);
-      setUser(userData);
-      
-      const populatedColumns = { ...columnsConfig };
-      for (const key in populatedColumns) {
-        populatedColumns[key].cards = [];
-      }
-      
-      followUpsData.forEach(fu => {
-        if (populatedColumns[fu.status]) {
-          populatedColumns[fu.status].cards.push(fu);
+        const followUpsCollectionRef = collection(db, "follow_ups");
+        const influencersCollectionRef = collection(db, "influencers");
+
+        const [followUpsSnapshot, influencersSnapshot] = await Promise.all([
+            getDocs(followUpsCollectionRef),
+            getDocs(influencersCollectionRef),
+        ]);
+
+        const followUpsData = followUpsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        const influencersData = influencersSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+        
+        setFollowUps(followUpsData);
+        setInfluencers(influencersData);
+        setUser(auth.currentUser);
+
+        const populatedColumns = JSON.parse(JSON.stringify(columnsConfig));
+        for (const key in populatedColumns) {
+            populatedColumns[key].cards = [];
         }
-      });
-      
-      setColumns(populatedColumns);
+
+        followUpsData.forEach(fu => {
+            if (populatedColumns[fu.status]) {
+                populatedColumns[fu.status].cards.push(fu);
+            }
+        });
+
+        setColumns(populatedColumns);
 
     } catch (error) {
-      console.error("Erro ao buscar dados do CRM:", error);
+        console.error("Erro ao buscar dados do CRM:", error);
     }
     setLoading(false);
-  };
-  
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   const onDragEnd = async (result) => {
     const { source, destination, draggableId } = result;
 
-    if (!destination || (source.droppableId === destination.droppableId)) {
+    if (!destination || (source.droppableId === destination.droppableId && source.index === destination.index)) {
       return;
     }
-
-    const startColumn = columns[source.droppableId];
-    const endColumn = columns[destination.droppableId];
+    
+    // O resto da lógica de onDragEnd pode permanecer a mesma para a UI otimista,
+    // mas a parte de atualização do Firebase precisa ser implementada.
     
     const card = followUps.find(fu => fu.id === draggableId);
-    
-    // Optimistic UI update
-    const newStartCards = Array.from(startColumn.cards);
-    newStartCards.splice(source.index, 1);
-    
-    const newEndCards = Array.from(endColumn.cards);
-    newEndCards.splice(destination.index, 0, card);
+    if (!card) return;
 
-    setColumns(prev => ({
-      ...prev,
-      [startColumn.id]: {
-        ...startColumn,
-        cards: newStartCards
-      },
-      [endColumn.id]: {
-        ...endColumn,
-        cards: newEndCards
-      }
-    }));
-    
+    // Atualiza o estado local para uma resposta de UI imediata
+    const newColumns = { ...columns };
+    const sourceColumn = newColumns[source.droppableId];
+    const destColumn = newColumns[destination.droppableId];
+    const [movedCard] = sourceColumn.cards.splice(source.index, 1);
+    destColumn.cards.splice(destination.index, 0, movedCard);
+    setColumns(newColumns);
+
     try {
-      await FollowUp.update(draggableId, { status: destination.droppableId });
-      fetchData();
+      const followUpDoc = doc(db, "follow_ups", draggableId);
+      await updateDoc(followUpDoc, { status: destination.droppableId });
+      // Opcional: recarregar os dados para garantir consistência total
+      // fetchData(); 
     } catch (error) {
       console.error("Falha ao atualizar status do follow-up:", error);
-      // Revert state on failure
-      setColumns(prev => {
-        const revertedStartCards = Array.from(endColumn.cards);
-        revertedStartCards.splice(destination.index, 1);
-
-        const revertedEndCards = Array.from(startColumn.cards);
-        revertedEndCards.splice(source.index, 0, card);
-        
-        return {
-          ...prev,
-          [startColumn.id]: { ...startColumn, cards: revertedEndCards },
-          [endColumn.id]: { ...endColumn, cards: revertedStartCards },
-        };
-      });
+      // Reverter a mudança na UI em caso de erro
+      fetchData();
     }
   };
-
+  
   const addUnassignedInfluencers = async () => {
-    const assignedInfluencerIds = followUps.map(fu => fu.influencerId);
-    const unassigned = influencers.filter(inf => !assignedInfluencerIds.includes(inf.id));
+    const assignedInfluencerIds = new Set(followUps.map(fu => fu.influencerId));
+    const unassigned = influencers.filter(inf => !assignedInfluencerIds.has(inf.id));
     
     if (unassigned.length > 0) {
-      const newFollowUps = unassigned.map(inf => ({
-        influencerId: inf.id,
-        influencerName: inf.nome,
-        influencerAvatar: inf.nome?.[0]?.toUpperCase() || '?',
-        status: 'prospeccao',
-        notes: 'Novo influenciador adicionado ao pipeline.',
-        assignedTo: user?.email || 'unknown'
-      }));
-      await FollowUp.bulkCreate(newFollowUps);
+      const followUpsCollectionRef = collection(db, "follow_ups");
+      const newFollowUpsPromises = unassigned.map(inf => {
+        const newFollowUp = {
+          influencerId: inf.id,
+          influencerName: inf.nome,
+          influencerAvatar: inf.nome?.[0]?.toUpperCase() || '?',
+          status: 'prospeccao',
+          notes: 'Novo influenciador adicionado ao pipeline.',
+          assignedTo: user?.email || 'unknown',
+          nextActionDate: null
+        };
+        return addDoc(followUpsCollectionRef, newFollowUp);
+      });
+      await Promise.all(newFollowUpsPromises);
       fetchData();
     } else {
       alert("Todos os influenciadores já estão no pipeline.");
     }
   };
 
+
   const stats = {
     total: followUps.length,
-    prospeccao: followUps.filter(f => f.status === 'prospeccao').length,
-    negociacao: followUps.filter(f => f.status === 'negociacao').length,
-    fechado: followUps.filter(f => f.status === 'fechado').length
+    prospeccao: columns['prospeccao']?.cards?.length || 0,
+    negociacao: columns['negociacao']?.cards?.length || 0,
+    fechado: columns['fechado']?.cards?.length || 0
   };
 
+  // O resto do seu código JSX continua aqui, sem alterações na renderização.
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 p-6">

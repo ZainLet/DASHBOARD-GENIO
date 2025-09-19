@@ -1,10 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { Influencer } from "@/entities/Influencer";
-import { User } from "@/entities/User";
+import React, { useState, useEffect, useCallback } from "react";
+import { db, auth } from "../src/firebaseConfig"; // Importe o db do Firebase
+import { 
+  collection, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc,
+  orderBy,
+  query
+} from "firebase/firestore";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Download, FileText, Calendar } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Search, Download } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 import InfluencerStats from "../components/influencers/InfluencerStats";
 import InfluencerTable from "../components/influencers/InfluencerTable";
@@ -12,43 +22,50 @@ import InfluencerModal from "../components/influencers/InfluencerModal";
 
 export default function Influencers() {
   const [influencers, setInfluencers] = useState([]);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(auth.currentUser);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editingInfluencer, setEditingInfluencer] = useState(null);
-  const [sortColumn, setSortColumn] = useState('created_date');
-  const [sortDirection, setSortDirection] = useState('desc');
+  const [sortColumn, setSortColumn] = useState('nome');
+  const [sortDirection, setSortDirection] = useState('asc');
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Referência para a coleção no Firestore
+  const influencersCollectionRef = collection(db, "influencers");
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [influencersData, userData] = await Promise.all([
-        Influencer.list('-created_date'),
-        User.me()
-      ]);
+      const q = query(influencersCollectionRef, orderBy(sortColumn, sortDirection));
+      const data = await getDocs(q);
+      const influencersData = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
       setInfluencers(influencersData);
-      setUser(userData);
     } catch (error) {
-      console.error("Erro ao carregar dados:", error);
+      console.error("Erro ao carregar dados do Firestore:", error);
     }
     setLoading(false);
-  };
+  }, [sortColumn, sortDirection]); // Adicione dependências para recarregar ao ordenar
+
+  useEffect(() => {
+    // Carrega os dados quando o componente monta ou a ordenação muda
+    loadData();
+    // Atualiza o usuário
+    setUser(auth.currentUser);
+  }, [loadData]);
 
   const handleSaveInfluencer = async (influencerData) => {
     try {
       if (editingInfluencer) {
-        await Influencer.update(editingInfluencer.id, influencerData);
+        // Atualiza um documento existente
+        const influencerDoc = doc(db, "influencers", editingInfluencer.id);
+        await updateDoc(influencerDoc, influencerData);
       } else {
-        await Influencer.create(influencerData);
+        // Adiciona um novo documento
+        await addDoc(influencersCollectionRef, influencerData);
       }
       setShowModal(false);
       setEditingInfluencer(null);
-      loadData();
+      loadData(); // Recarrega os dados
     } catch (error) {
       console.error("Erro ao salvar influenciador:", error);
     }
@@ -62,30 +79,26 @@ export default function Influencers() {
   const handleDeleteInfluencer = async (influencerId) => {
     if (window.confirm("Tem certeza que deseja excluir este influenciador?")) {
       try {
-        await Influencer.delete(influencerId);
-        loadData();
+        const influencerDoc = doc(db, "influencers", influencerId);
+        await deleteDoc(influencerDoc);
+        loadData(); // Recarrega os dados
       } catch (error) {
         console.error("Erro ao excluir influenciador:", error);
       }
     }
   };
-
+  
+  // A lógica de filtragem continua a mesma
   const filteredInfluencers = influencers.filter(influencer =>
     Object.values(influencer).some(value =>
       value?.toString().toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
+  
+  // A ordenação agora é feita na query do Firestore, então podemos remover o .sort() local
+  const sortedInfluencers = filteredInfluencers;
 
-  const sortedInfluencers = [...filteredInfluencers].sort((a, b) => {
-    const aVal = a[sortColumn];
-    const bVal = b[sortColumn];
-    
-    if (sortDirection === 'asc') {
-      return aVal > bVal ? 1 : -1;
-    }
-    return aVal < bVal ? 1 : -1;
-  });
-
+  // A função exportToCSV continua a mesma
   const exportToCSV = () => {
     const headers = ['Nome', 'Instagram', 'TikTok', 'Seguidores IG', 'Seguidores TT', 'Status', 'Valor', 'Nicho'];
     const csvContent = [
@@ -115,7 +128,7 @@ export default function Influencers() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header (sem alterações) */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-2">
@@ -145,10 +158,10 @@ export default function Influencers() {
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats (sem alterações) */}
         <InfluencerStats influencers={influencers} loading={loading} />
 
-        {/* Search and Filters */}
+        {/* Search and Filters (sem alterações) */}
         <Card className="bg-slate-800/50 backdrop-blur-xl border-slate-700 mb-6">
           <CardContent className="p-6">
             <div className="relative">
@@ -181,7 +194,7 @@ export default function Influencers() {
           }}
         />
 
-        {/* Modal */}
+        {/* Modal (sem alterações) */}
         {showModal && (
           <InfluencerModal
             influencer={editingInfluencer}

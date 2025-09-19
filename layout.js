@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { User } from "@/entities/User";
-import { 
-  LayoutDashboard, 
-  Users, 
-  Bot, 
-  Target, 
+import { auth } from "../src/firebaseConfig"; // Importe a autenticação do Firebase
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import {
+  LayoutDashboard,
+  Users,
+  Bot,
+  Target,
   LogOut,
-  Menu,
-  X,
   GitBranch
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 
+// ... (o array navigationItems continua o mesmo)
 const navigationItems = [
   {
     title: "Dashboard",
@@ -56,28 +56,45 @@ const navigationItems = [
   }
 ];
 
+
 export default function Layout({ children }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-   onAuthStateChanged();
-  }, []);
+    // Escuta as mudanças no estado de autenticação
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        // Usuário está logado
+        setUser({
+            uid: currentUser.uid,
+            email: currentUser.email,
+            full_name: currentUser.displayName,
+            // Adicionar role se estiver usando custom claims
+        });
+      } else {
+        // Usuário não está logado, redireciona para a página de login
+        // (Você precisará criar uma página de Login)
+        // navigate("/login");
+        setUser(null);
+      }
+      setLoading(false);
+    });
 
-  const onAuthStateChanged = async () => {
-    try {
-      const currentUser = await User.me();
-      setUser(currentUser);
-    } catch (error) {
-      console.error("Usuário não autenticado");
-    }
-    setLoading(false);
-  };
+    // Limpa o listener quando o componente é desmontado
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleLogout = async () => {
-    await User.logout();
-    window.location.reload();
+    try {
+      await signOut(auth);
+      // O listener onAuthStateChanged cuidará do redirecionamento
+      window.location.reload(); // Força o reload para limpar o estado
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
   };
 
   if (loading) {
@@ -90,7 +107,9 @@ export default function Layout({ children }) {
 
   return (
     <SidebarProvider defaultOpen>
-      <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800">
+        {/* O resto do seu código JSX do layout continua aqui, exatamente como estava. */}
+        {/* A única alteração é a lógica de autenticação acima. */}
+        <div className="min-h-screen flex w-full bg-gradient-to-br from-slate-900 via-purple-900 to-slate-800">
         <style>
           {`
             :root {
