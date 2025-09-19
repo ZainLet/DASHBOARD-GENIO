@@ -1,0 +1,113 @@
+/* Importação do Tailwind CSS via CDN */
+@import "https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css";
+
+:root {
+    --background: 220 13% 9%;
+    --foreground: 220 9% 95%;
+    --card: 220 13% 9%;
+    --card-foreground: 220 9% 95%;
+    --popover: 220 13% 9%;
+    --popover-foreground: 220 9% 95%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 220 9% 95%;
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 220 9% 95%;
+    --muted: 220 13% 15%;
+    --muted-foreground: 220 9% 65%;
+    --accent: 220 13% 15%;
+    --accent-foreground: 220 9% 95%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 220 9% 95%;
+    --border: 220 13% 15%;
+    --input: 220 13% 15%;
+    --ring: 142 76% 36%;
+    --radius: 0.75rem;
+    --sidebar-background: 220 13% 11%;
+    --sidebar-foreground: 220 9% 95%;
+    --sidebar-primary: 142 76% 36%;
+    --sidebar-primary-foreground: 220 9% 95%;
+    --sidebar-accent: 220 13% 16%;
+    --sidebar-accent-foreground: 220 9% 95%;
+    --sidebar-border: 220 13% 15%;
+    --sidebar-ring: 142 76% 36%;
+}
+
+body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: sans-serif;
+}
+
+.bg-gradient-to-br {
+    background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+}
+
+.from-slate-900 {
+    --tw-gradient-from: #0f172a;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(15, 23, 42, 0));
+}
+
+.via-purple-900 {
+    --tw-gradient-stops: var(--tw-gradient-from), #5b21b6, var(--tw-gradient-to, rgba(91, 33, 182, 0));
+}
+
+.to-slate-800 {
+    --tw-gradient-to: #1e293b;
+}
+
+
+/* Adicione outros estilos globais aqui */
+.sidebar {
+    transition: width 300ms ease-in-out;
+    width: 280px;
+    background-color: hsl(var(--sidebar-background));
+    border-right: 1px solid hsl(var(--sidebar-border));
+}
+
+.sidebar-header, .sidebar-footer {
+    border-color: hsl(var(--sidebar-border));
+}
+
+.sidebar-menu-button {
+    color: hsl(var(--sidebar-foreground));
+}
+
+.sidebar-menu-button:hover {
+    background-color: hsl(var(--sidebar-accent));
+    color: #34d399; /* emerald-400 */
+}
+
+.sidebar-menu-button.active {
+    background: linear-gradient(to right, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
+    color: #34d399; /* emerald-400 */
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.bg-clip-text {
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.text-transparent {
+    color: transparent;
+}
+
+.from-emerald-400 {
+    --tw-gradient-from: #34d399;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(52, 211, 153, 0));
+}
+
+.to-cyan-400 {
+    --tw-gradient-to: #22d3ee;
+}
+
+.backdrop-blur-xl {
+    --tw-backdrop-blur: blur(24px);
+    backdrop-filter: var(--tw-backdrop-blur);
+}
+
+.border-slate-700 {
+    --tw-border-opacity: 1;
+    border-color: rgba(51, 65, 85, var(--tw-border-opacity));
+}
