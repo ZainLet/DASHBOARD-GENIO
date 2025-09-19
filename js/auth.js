@@ -6,7 +6,6 @@ import {
     signInWithEmailAndPassword 
 } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-auth.js";
 
-// Função para traduzir os erros mais comuns do Firebase
 function getFirebaseErrorMessage(errorCode) {
     switch (errorCode) {
         case "auth/invalid-email":
@@ -24,7 +23,6 @@ function getFirebaseErrorMessage(errorCode) {
     }
 }
 
-// Lógica de autenticação
 async function handleAuth(isLogin = true, email, password) {
     const errorEl = document.getElementById('auth-error');
     const loginButton = document.querySelector('button[data-auth-type="login"]');
@@ -54,8 +52,6 @@ async function handleAuth(isLogin = true, email, password) {
     }
 }
 
-
-// Redirecionamento e renderização da página de login
 document.addEventListener('DOMContentLoaded', () => {
     onAuthStateChanged(auth, (user) => {
         const isLoginPage = window.location.pathname.endsWith('login.html');
@@ -133,7 +129,6 @@ function renderForms() {
     loginContent.innerHTML = formHTML('login');
     registerContent.innerHTML = formHTML('register');
 
-    // Erro unificado
     const errorEl = document.createElement('p');
     errorEl.id = 'auth-error';
     errorEl.className = 'text-red-400 text-sm text-center';
@@ -177,7 +172,6 @@ function setupTabs() {
     });
 }
 
-// Função de Logout Global
 export async function handleLogout() {
     try {
         await signOut(auth);

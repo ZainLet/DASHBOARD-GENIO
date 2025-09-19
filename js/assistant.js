@@ -37,7 +37,7 @@ async function loadData() {
             ? { ...progressSnapshot.docs[0].data(), id: progressSnapshot.docs[0].id }
             : { metas: {}, checklist: {}, notas: '', data: new Date().toISOString().split('T')[0] };
 
-        editedConfig = JSON.parse(JSON.stringify(config)); // Deep copy for editing
+        editedConfig = JSON.parse(JSON.stringify(config));
         
         loading = false;
         renderPage();
@@ -77,7 +77,7 @@ function renderEditButtons() {
     const container = document.getElementById('edit-buttons-container');
     if (!container) return;
     
-    if (user?.email === 'admin@example.com') { // Simplified admin check
+    if (user?.email === 'admin@example.com') {
         if (editMode) {
             container.innerHTML = `
                 <div class="flex gap-2">
@@ -224,7 +224,6 @@ async function handleSaveConfig() {
     }
 }
 
-
 function attachEventListeners() {
     document.querySelectorAll('.meta-change-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -263,12 +262,11 @@ function attachEventListeners() {
     if (cancelBtn) {
         cancelBtn.addEventListener('click', () => {
             editMode = false;
-            editedConfig = JSON.parse(JSON.stringify(config)); // Reset changes
+            editedConfig = JSON.parse(JSON.stringify(config));
             renderPage();
         });
     }
 
-    // Event delegation for inputs in edit mode
     document.getElementById('routine-tab-content')?.addEventListener('input', (e) => {
         if (e.target.classList.contains('meta-title-input')) {
             editedConfig.metaConfig[e.target.dataset.metaKey].titulo = e.target.value;
@@ -285,7 +283,6 @@ function attachEventListeners() {
         }
     });
 }
-
 
 document.addEventListener('DOMContentLoaded', () => {
     onAuthStateChanged(auth, (currentUser) => {

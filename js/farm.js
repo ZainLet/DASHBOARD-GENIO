@@ -113,7 +113,6 @@ function renderTabContent() {
 }
 
 function renderProfilesTab() {
-    // Logic from profiestab.js
     const stats = {
         total: profiles.length,
         ativos: profiles.filter(p => p.status === 'ativo').length,
@@ -138,22 +137,17 @@ function renderProfilesTab() {
 }
 
 function renderAdsTab() {
-    // Logic from adstab.js
     return `<div class="space-y-6">Ads content here</div>`;
 }
 
 function renderHistoryTab() {
-    // Logic from historytab.js
     return `<div class="space-y-6">History content here</div>`;
 }
 
 function renderWorkspaceTab() {
-    // Logic from workspacetab.js
     return `<div class="space-y-6">Workspace content here</div>`;
 }
 
-
-// --- EVENT LISTENERS ---
 function attachTabEventListeners() {
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -161,18 +155,13 @@ function attachTabEventListeners() {
             document.getElementById('tab-content').innerHTML = renderTabContent();
             updateActiveTab();
             lucide.createIcons();
-            // Re-attach event listeners for the new content if necessary
         });
     });
 }
 
-
-// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
     const appContent = document.createElement('div');
     appContent.id = 'app-content';
-    // This is a placeholder since the farm page has its own structure and doesn't inject into a layout's child area.
-    // We'll replace the entire #app content instead.
     document.getElementById('app').innerHTML = '<div id="app-content"></div>';
 
     onAuthStateChanged(auth, (currentUser) => {

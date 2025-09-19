@@ -7,27 +7,27 @@ export function createPageUrl(pageName) {
 const navigationItems = [
     {
         title: "Dashboard",
-        url: createPageUrl("index"),
+        url: createPage-url("index"),
         icon: 'layout-dashboard',
     },
     {
         title: "Influenciadores",
-        url: createPageUrl("influencers"),
+        url: create-page-url("influencers"),
         icon: 'users',
     },
     {
         title: "CRM Pipeline",
-        url: createPageUrl("crm"),
+        url: create-page-url("crm"),
         icon: 'git-branch',
     },
     {
         title: "Farm de Perfis",
-        url: createPageUrl("farm"),
+        url: create-page-url("farm"),
         icon: 'bot',
     },
     {
         title: "Rotina & Metas",
-        url: createPageUrl("assistant"),
+        url: create-page-url("assistant"),
         icon: 'target',
     }
 ];
@@ -39,7 +39,7 @@ export function renderLayout(user, pageContent) {
     const currentPage = window.location.pathname;
 
     const layoutHTML = `
-        <aside class="sidebar flex flex-col h-screen bg-slate-900/90 backdrop-blur-xl border-r border-slate-700 w-64 text-white">
+        <aside class="sidebar fixed inset-y-0 left-0 z-30 flex-col h-screen bg-slate-900/90 backdrop-blur-xl border-r border-slate-700 w-64 text-white transition-transform duration-300 transform -translate-x-full md:relative md:translate-x-0 md:flex">
             <div class="sidebar-header border-b border-slate-700 p-6 bg-slate-900/50">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-gradient-to-r from-emerald-400 to-cyan-400 rounded-xl flex items-center justify-center shadow-lg">
@@ -86,13 +86,14 @@ export function renderLayout(user, pageContent) {
                 </div>
             </div>
         </aside>
-        <main class="flex-1 flex flex-col">
+        <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-20 hidden md:hidden"></div>
+        <main class="flex-1 flex flex-col md:w-[calc(100%-16rem)]">
             <header class="bg-slate-900/40 backdrop-blur-xl border-b border-slate-700 px-6 py-4 md:hidden">
-                 <div class="flex items-center gap-4">
+                 <div class="flex items-center justify-between">
+                    <h1 class="text-xl font-semibold text-slate-200">Gênio IA</h1>
                     <button id="sidebar-trigger" class="hover:bg-slate-800/50 p-2 rounded-lg transition-colors duration-200 text-slate-300">
                         <i data-lucide="menu"></i>
                     </button>
-                    <h1 class="text-xl font-semibold text-slate-200">Gênio IA</h1>
                  </div>
             </header>
             <div class="flex-1 overflow-auto">
@@ -102,16 +103,22 @@ export function renderLayout(user, pageContent) {
     `;
     appContainer.innerHTML = layoutHTML;
 
-    // Adiciona o event listener para o botão de logout
     document.getElementById('logout-button').addEventListener('click', handleLogout);
 
-    // Adiciona funcionalidade para o menu hamburguer (opcional)
     const sidebar = appContainer.querySelector('.sidebar');
     const trigger = document.getElementById('sidebar-trigger');
+    const overlay = document.getElementById('sidebar-overlay');
+
+    const toggleSidebar = () => {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    };
+
     if (trigger) {
-        trigger.addEventListener('click', () => {
-            sidebar.classList.toggle('hidden'); // Simples toggle para mobile
-        });
+        trigger.addEventListener('click', toggleSidebar);
+    }
+    if (overlay) {
+        overlay.addEventListener('click', toggleSidebar);
     }
 
     lucide.createIcons();

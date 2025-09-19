@@ -18,7 +18,6 @@ const columnsConfig = {
 };
 
 async function fetchData() {
-    document.getElementById('app-content').innerHTML = `<div>Carregando...</div>`;
     try {
         const followUpsCollectionRef = collection(db, "follow_ups");
         const influencersCollectionRef = collection(db, "influencers");
@@ -42,7 +41,10 @@ async function fetchData() {
         renderPage();
     } catch (error) {
         console.error("Erro ao buscar dados do CRM:", error);
-        document.getElementById('app-content').innerHTML = `<div>Erro ao carregar dados.</div>`;
+        const appContent = document.getElementById('app-content');
+        if (appContent) {
+            appContent.innerHTML = `<div>Erro ao carregar dados.</div>`;
+        }
     }
 }
 
@@ -112,7 +114,7 @@ function renderKanbanBoard() {
 
 function renderPage() {
     const pageContent = `
-        <div class="max-w-7xl mx-auto">
+        <div class="max-w-7xl mx-auto p-6">
             <div class="flex justify-between items-center mb-8">
                 <div>
                     <h1 class="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-2">
@@ -130,16 +132,22 @@ function renderPage() {
         </div>
     `;
     
-    document.getElementById('app-content').innerHTML = pageContent;
-    renderLayout(user, document.getElementById('app-content').innerHTML);
+    const appContent = document.getElementById('app-content');
+    if (appContent) {
+        appContent.innerHTML = pageContent;
+    }
+    
+    renderLayout(user, appContent.innerHTML);
     attachEventListeners();
     lucide.createIcons();
 }
 
 function attachEventListeners() {
-    document.getElementById('sync-influencers').addEventListener('click', addUnassignedInfluencers);
+    const syncButton = document.getElementById('sync-influencers');
+    if (syncButton) {
+        syncButton.addEventListener('click', addUnassignedInfluencers);
+    }
     
-    // Drag and Drop Logic
     const draggables = document.querySelectorAll('.draggable');
     const droppables = document.querySelectorAll('.droppable');
     let draggedItem = null;
@@ -154,8 +162,10 @@ function attachEventListeners() {
 
         draggable.addEventListener('dragend', (e) => {
             setTimeout(() => {
-                draggedItem.style.display = 'block';
-                draggedItem = null;
+                if (draggedItem) {
+                    draggedItem.style.display = 'block';
+                    draggedItem = null;
+                }
             }, 0);
         });
     });
@@ -170,17 +180,13 @@ function attachEventListeners() {
                 const cardId = draggedItem.dataset.cardId;
                 const newStatus = e.currentTarget.dataset.columnId;
                 
-                // Optimistic UI update
                 e.currentTarget.appendChild(draggedItem);
 
                 try {
                     const followUpDoc = doc(db, "follow_ups", cardId);
                     await updateDoc(followUpDoc, { status: newStatus });
-                    // No need to call fetchData(), UI is already updated. 
-                    // Consider a light refresh or state update if more complex data changes.
                 } catch (error) {
                     console.error("Falha ao atualizar status do follow-up:", error);
-                    // Revert UI on error
                     fetchData(); 
                 }
             }
@@ -188,7 +194,12 @@ function attachEventListeners() {
     });
 }
 
-async function addUnassignedInfluencers() {
+async function addUnassignedInfluencers(event) {
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.innerHTML = '<i data-lucide="refresh-cw" class="w-4 h-4 mr-2 animate-spin"></i> Sincronizando...';
+    lucide.createIcons();
+
     const assignedInfluencerIds = new Set(followUps.map(fu => fu.influencerId));
     const unassigned = influencers.filter(inf => !assignedInfluencerIds.has(inf.id));
 
@@ -197,7 +208,7 @@ async function addUnassignedInfluencers() {
         const newFollowUpsPromises = unassigned.map(inf => {
             const newFollowUp = {
                 influencerId: inf.id,
-                influencerName: inf.nome,
+                influencerName: inf.nome || 'Nome não informado',
                 influencerAvatar: inf.nome?.[0]?.toUpperCase() || '?',
                 status: 'prospeccao',
                 notes: 'Novo influenciador adicionado ao pipeline.',
@@ -207,17 +218,22 @@ async function addUnassignedInfluencers() {
             return addDoc(followUpsCollectionRef, newFollowUp);
         });
         await Promise.all(newFollowUpsPromises);
-        fetchData();
+        await fetchData(); // Chama fetchData para recarregar e redesenhar a tela
     } else {
         alert("Todos os influenciadores já estão no pipeline.");
+        button.disabled = false;
+        button.innerHTML = '<i data-lucide="plus" class="w-4 h-4 mr-2"></i> Sincronizar Influenciadores';
+        lucide.createIcons();
     }
 }
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    const app = document.getElementById('app');
     const appContent = document.createElement('div');
     appContent.id = 'app-content';
-    document.getElementById('app').appendChild(appContent);
+    appContent.innerHTML = `<div>Carregando...</div>`;
+    app.appendChild(appContent);
 
     onAuthStateChanged(auth, (currentUser) => {
         if (currentUser) {

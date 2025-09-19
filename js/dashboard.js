@@ -51,11 +51,9 @@ function getGreeting(date) {
 
 async function fetchStats() {
     try {
-        // 1. Influenciadores Ativos
         const influencersQuery = query(collection(db, "influencers"), where("status", "==", "ativo"));
         const influencersSnap = await getDocs(influencersQuery);
 
-        // 2. Comentários Hoje
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
@@ -68,7 +66,6 @@ async function fetchStats() {
         );
         const commentsSnap = await getDocs(commentsQuery);
 
-        // 3. Metas Concluídas
         const progressSnap = await getDocs(collection(db, "assistant_progress"));
         let metasConcluidas = '0%';
         if (!progressSnap.empty) {
@@ -80,7 +77,6 @@ async function fetchStats() {
             }
         }
 
-        // 4. Próximas Postagens
         const proximos7dias = new Date();
         proximos7dias.setDate(proximos7dias.getDate() + 7);
         const postagensQuery = query(
@@ -108,11 +104,15 @@ async function fetchStats() {
     }
 }
 
-function renderDashboard(user, stats, currentTime) {
-    const appContainer = document.getElementById('app');
-    if (!appContainer) return;
-    
-    appContainer.innerHTML = `
+function getDashboardContent(user, stats, currentTime) {
+    const statCards = [
+        { title: "Influenciadores Ativos", value: stats.influencersAtivos, icon: "trending-up", color: "text-emerald-400" },
+        { title: "Comentários Hoje", value: stats.comentariosHoje, icon: "activity", color: "text-blue-400" },
+        { title: "Metas Concluídas", value: stats.metasConcluidas, icon: "bar-chart-3", color: "text-purple-400" },
+        { title: "Próximas Postagens", value: stats.proximasPostagens, icon: "calendar", color: "text-orange-400" }
+    ];
+
+    return `
         <div class="relative z-10 max-w-7xl mx-auto p-6">
             <div class="mb-12">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -125,10 +125,10 @@ function renderDashboard(user, stats, currentTime) {
                         </p>
                     </div>
                     <div class="flex flex-col items-end text-right">
-                        <div class="text-2xl font-bold text-slate-200">
+                        <div class="text-2xl font-bold text-slate-200 clock-time">
                             ${currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                         </div>
-                        <div class="text-slate-400">
+                        <div class="text-slate-400 clock-date">
                             ${currentTime.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
                         </div>
                     </div>
@@ -136,7 +136,18 @@ function renderDashboard(user, stats, currentTime) {
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-                </div>
+                ${statCards.map(stat => `
+                    <div class="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-lg p-6">
+                        <div class="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <h3 class="text-sm font-medium text-slate-400">${stat.title}</h3>
+                            <i data-lucide="${stat.icon}" class="h-4 w-4 ${stat.color}"></i>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-slate-200">${stat.value}</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                 ${navigationCards.map(card => `
@@ -163,29 +174,6 @@ function renderDashboard(user, stats, currentTime) {
             </div>
         </div>
     `;
-    
-    // Inject stat cards
-    const statContainer = appContainer.querySelector('.grid.md\\:grid-cols-4');
-    const statCards = [
-        { title: "Influenciadores Ativos", value: stats.influencersAtivos, icon: "trending-up", color: "text-emerald-400" },
-        { title: "Comentários Hoje", value: stats.comentariosHoje, icon: "activity", color: "text-blue-400" },
-        { title: "Metas Concluídas", value: stats.metasConcluidas, icon: "bar-chart-3", color: "text-purple-400" },
-        { title: "Próximas Postagens", value: stats.proximasPostagens, icon: "calendar", color: "text-orange-400" }
-    ];
-
-    statContainer.innerHTML = statCards.map(stat => `
-        <div class="bg-slate-800/50 backdrop-blur-xl border border-slate-700 rounded-lg p-6">
-            <div class="flex flex-row items-center justify-between space-y-0 pb-2">
-                <h3 class="text-sm font-medium text-slate-400">${stat.title}</h3>
-                <i data-lucide="${stat.icon}" class="h-4 w-4 ${stat.color}"></i>
-            </div>
-            <div>
-                <div class="text-2xl font-bold text-slate-200">${stat.value}</div>
-            </div>
-        </div>
-    `).join('');
-
-    lucide.createIcons();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -198,20 +186,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentUser) {
             const stats = await fetchStats();
             loading = false;
-            renderDashboard(user, stats, currentTime);
-            renderLayout(user);
+            const dashboardContent = getDashboardContent(user, stats, currentTime);
+            renderLayout(user, dashboardContent);
+            lucide.createIcons();
         } else {
             loading = false;
-            // O auth.js já redireciona
         }
     });
 
     setInterval(() => {
         currentTime = new Date();
         if(user && !loading) {
-            // Apenas atualiza o relógio sem re-renderizar tudo
-            const timeEl = document.querySelector('.text-2xl.font-bold.text-slate-200');
-            const dateEl = document.querySelector('.text-slate-400');
+            const timeEl = document.querySelector('.clock-time');
+            const dateEl = document.querySelector('.clock-date');
             if (timeEl) timeEl.textContent = currentTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             if (dateEl) dateEl.textContent = currentTime.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
         }
