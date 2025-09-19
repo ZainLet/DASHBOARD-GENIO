@@ -1,0 +1,52 @@
+{
+  "name": "FarmProfile",
+  "type": "object",
+  "properties": {
+    "username": {
+      "type": "string",
+      "description": "Nome de usuário do perfil"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email do perfil ADS Power"
+    },
+    "senha": {
+      "type": "string",
+      "description": "Senha do perfil"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "pausado",
+        "banido",
+        "verificando"
+      ],
+      "default": "ativo",
+      "description": "Status do perfil"
+    },
+    "seguidores": {
+      "type": "number",
+      "default": 0,
+      "description": "Número de seguidores"
+    },
+    "ultimoUso": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Data e hora do último uso"
+    },
+    "comentariosHoje": {
+      "type": "number",
+      "default": 0,
+      "description": "Número de comentários feitos hoje"
+    },
+    "limiteComentarios": {
+      "type": "number",
+      "default": 10,
+      "description": "Limite diário de comentários"
+    }
+  },
+  "required": [
+    "username"
+  ]
+}

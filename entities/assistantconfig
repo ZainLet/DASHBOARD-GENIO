@@ -1,0 +1,71 @@
+{
+  "name": "AssistantConfig",
+  "type": "object",
+  "properties": {
+    "metaConfig": {
+      "type": "object",
+      "properties": {
+        "meta1": {
+          "type": "object",
+          "properties": {
+            "titulo": {
+              "type": "string"
+            },
+            "subtitulo": {
+              "type": "string"
+            },
+            "alvo": {
+              "type": "number"
+            }
+          }
+        },
+        "meta2": {
+          "type": "object",
+          "properties": {
+            "titulo": {
+              "type": "string"
+            },
+            "subtitulo": {
+              "type": "string"
+            },
+            "alvo": {
+              "type": "number"
+            }
+          }
+        },
+        "meta3": {
+          "type": "object",
+          "properties": {
+            "titulo": {
+              "type": "string"
+            },
+            "subtitulo": {
+              "type": "string"
+            },
+            "alvo": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "rotina": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "texto": {
+            "type": "string"
+          },
+          "categoria": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": []
+}

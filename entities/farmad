@@ -1,0 +1,63 @@
+{
+  "name": "FarmAd",
+  "type": "object",
+  "properties": {
+    "titulo": {
+      "type": "string",
+      "description": "Título do anúncio"
+    },
+    "categoria": {
+      "type": "string",
+      "enum": [
+        "anotar",
+        "genio-ia",
+        "outros"
+      ],
+      "description": "Categoria do anúncio"
+    },
+    "urlInstagram": {
+      "type": "string",
+      "description": "URL do anúncio no Instagram"
+    },
+    "metaInstagram": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de comentários no Instagram"
+    },
+    "urlTiktok": {
+      "type": "string",
+      "description": "URL do anúncio no TikTok"
+    },
+    "metaTiktok": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de comentários no TikTok"
+    },
+    "urlFacebook": {
+      "type": "string",
+      "description": "URL do anúncio no Facebook"
+    },
+    "metaFacebook": {
+      "type": "number",
+      "default": 0,
+      "description": "Meta de comentários no Facebook"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "ativo",
+        "pausado"
+      ],
+      "default": "ativo",
+      "description": "Status do anúncio"
+    },
+    "comentariosFeitos": {
+      "type": "number",
+      "default": 0,
+      "description": "Total de comentários já feitos"
+    }
+  },
+  "required": [
+    "titulo"
+  ]
+}
