@@ -1,33 +1,39 @@
+// Local: zainlet/dashboard-genio/ZainLet-DASHBOARD-GENIO-649c1ce7de1ce2fd13755098a68c4310cbe9ea3f/js/shared.js
+
 import { handleLogout } from './auth.js';
 
 export function createPageUrl(pageName) {
+    // Corrigido para retornar o caminho correto, incluindo 'index.html' para a raiz.
+    if (pageName === 'index') {
+        return '/index.html';
+    }
     return `/${pageName.toLowerCase()}.html`;
 }
 
 const navigationItems = [
     {
         title: "Dashboard",
-        url: createPage-url("index"),
+        url: createPageUrl("index"), // Corrigido
         icon: 'layout-dashboard',
     },
     {
         title: "Influenciadores",
-        url: create-page-url("influencers"),
+        url: createPageUrl("influencers"), // Corrigido
         icon: 'users',
     },
     {
         title: "CRM Pipeline",
-        url: create-page-url("crm"),
+        url: createPageUrl("crm"), // Corrigido
         icon: 'git-branch',
     },
     {
         title: "Farm de Perfis",
-        url: create-page-url("farm"),
+        url: createPageUrl("farm"), // Corrigido
         icon: 'bot',
     },
     {
         title: "Rotina & Metas",
-        url: create-page-url("assistant"),
+        url: createPageUrl("assistant"), // Corrigido
         icon: 'target',
     }
 ];
@@ -96,12 +102,21 @@ export function renderLayout(user, pageContent) {
                     </button>
                  </div>
             </header>
-            <div class="flex-1 overflow-auto">
+            <div class="flex-1 overflow-auto" id="app-content-wrapper">
                 ${pageContent}
             </div>
         </main>
     `;
     appContainer.innerHTML = layoutHTML;
+
+    // Renomeei o ID para evitar conflito com a div principal #app-content
+    const pageWrapper = document.getElementById('app-content-wrapper');
+    const appContent = document.getElementById('app-content');
+    if (appContent) {
+        pageWrapper.innerHTML = ''; // Limpa o wrapper
+        pageWrapper.appendChild(appContent); // Move o conteúdo da página para dentro do wrapper
+    }
+
 
     document.getElementById('logout-button').addEventListener('click', handleLogout);
 
