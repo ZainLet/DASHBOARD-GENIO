@@ -1,108 +1,63 @@
-:root {
-    --background: 220 13% 9%;
-    --foreground: 220 9% 95%;
-    --card: 220 13% 9%;
-    --card-foreground: 220 9% 95%;
-    --popover: 220 13% 9%;
-    --popover-foreground: 220 9% 95%;
-    --primary: 142 76% 36%;
-    --primary-foreground: 220 9% 95%;
-    --secondary: 220 13% 15%;
-    --secondary-foreground: 220 9% 95%;
-    --muted: 220 13% 15%;
-    --muted-foreground: 220 9% 65%;
-    --accent: 220 13% 15%;
-    --accent-foreground: 220 9% 95%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 220 9% 95%;
-    --border: 220 13% 15%;
-    --input: 220 13% 15%;
-    --ring: 142 76% 36%;
-    --radius: 0.75rem;
-    --sidebar-background: 220 13% 11%;
-    --sidebar-foreground: 220 9% 95%;
-    --sidebar-primary: 142 76% 36%;
-    --sidebar-primary-foreground: 220 9% 95%;
-    --sidebar-accent: 220 13% 16%;
-    --sidebar-accent-foreground: 220 9% 95%;
-    --sidebar-border: 220 13% 15%;
-    --sidebar-ring: 142 76% 36%;
-}
-
+/* Removendo estilos antigos e deixando apenas o essencial que o Tailwind não cobre. */
 body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-.bg-gradient-to-br {
-    background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+/* Estilo customizado para a scrollbar do Kanban */
+#kanban-board::-webkit-scrollbar {
+  height: 8px;
 }
 
-.from-slate-900 {
-    --tw-gradient-from: #0f172a;
-    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(15, 23, 42, 0));
+#kanban-board::-webkit-scrollbar-track {
+  background: #1f2937; /* gray-800 */
+  border-radius: 10px;
 }
 
-.via-purple-900 {
-    --tw-gradient-stops: var(--tw-gradient-from), #5b21b6, var(--tw-gradient-to, rgba(91, 33, 182, 0));
+#kanban-board::-webkit-scrollbar-thumb {
+  background: #4b5563; /* gray-600 */
+  border-radius: 10px;
 }
 
-.to-slate-800 {
-    --tw-gradient-to: #1e293b;
+#kanban-board::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* gray-500 */
 }
 
-.sidebar {
-    transition: width 300ms ease-in-out;
-    width: 280px;
-    background-color: hsl(var(--sidebar-background));
-    border-right: 1px solid hsl(var(--sidebar-border));
+/* NOVAS ANIMAÇÕES GLOBAIS */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-.sidebar-header, .sidebar-footer {
-    border-color: hsl(var(--sidebar-border));
+@keyframes slideInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
 
-.sidebar-menu-button {
-    color: hsl(var(--sidebar-foreground));
+@keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
 }
 
-.sidebar-menu-button:hover {
-    background-color: hsl(var(--sidebar-accent));
-    color: #34d399;
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
 }
 
-.sidebar-menu-button.active {
-    background: linear-gradient(to right, rgba(16, 185, 129, 0.2), rgba(6, 182, 212, 0.2));
-    color: #34d399;
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+.slide-in-up {
+    animation: slideInUp 0.5s ease-out forwards;
 }
 
-.bg-clip-text {
-    -webkit-background-clip: text;
-    background-clip: text;
+.scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
 }
 
-.text-transparent {
-    color: transparent;
-}
+/* Animação com delay para elementos em sequência */
+.stagger-1 { animation-delay: 100ms; }
+.stagger-2 { animation-delay: 200ms; }
+.stagger-3 { animation-delay: 300ms; }
+.stagger-4 { animation-delay: 400ms; }
 
-.from-emerald-400 {
-    --tw-gradient-from: #34d399;
-    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(52, 211, 153, 0));
-}
-
-.to-cyan-400 {
-    --tw-gradient-to: #22d3ee;
-}
-
-.backdrop-blur-xl {
-    --tw-backdrop-blur: blur(24px);
-    backdrop-filter: var(--tw-backdrop-blur);
-}
-
-.border-slate-700 {
-    --tw-border-opacity: 1;
-    border-color: rgba(51, 65, 85, var(--tw-border-opacity));
+/* Para garantir que os elementos animados comecem invisíveis */
+.animated {
+    opacity: 0;
 }
