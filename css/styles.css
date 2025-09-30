@@ -1,63 +1,181 @@
-/* Removendo estilos antigos e deixando apenas o essencial que o Tailwind não cobre. */
-body {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+/* =============================================== */
+/* NOVOS ESTILOS PARA O CALENDÁRIO (FULLCALENDAR)  */
+/* =============================================== */
+
+/* Efeito de vidro no fundo do modal do calendário */
+#calendar-modal-container {
+  background-color: rgba(15, 23, 42, 0.6); /* Cor de fundo com transparência */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
-/* Estilo customizado para a scrollbar do Kanban */
-#kanban-board::-webkit-scrollbar {
-  height: 8px;
+/* Container principal do calendário */
+#calendar {
+  --fc-border-color: #334155; /* slate-700 */
+  --fc-today-bg-color: rgba(139, 92, 246, 0.1); /* Roxo com opacidade */
+  --fc-event-bg-color: #8B5CF6; /* Roxo principal */
+  --fc-event-border-color: #7c3aed;
 }
 
-#kanban-board::-webkit-scrollbar-track {
-  background: #1f2937; /* gray-800 */
+/* Toolbar - Cabeçalho com título e botões */
+.fc .fc-toolbar.fc-header-toolbar {
+  margin-bottom: 1.5em;
+  color: #f1f5f9; /* slate-100 */
+}
+
+.fc-toolbar-title {
+  font-size: 1.5rem; /* 24px */
+  font-weight: 700;
+  color: #f8fafc; /* slate-50 */
+}
+
+/* Estilo geral dos botões (Mês, Semana, Hoje, etc.) */
+.fc .fc-button {
+  background-color: #334155; /* slate-700 */
+  border: 1px solid #475569; /* slate-600 */
+  color: #e2e8f0; /* slate-200 */
+  border-radius: 0.5rem; /* 8px */
+  transition: all 0.2s ease-in-out;
+  box-shadow: none;
+}
+
+.fc .fc-button:hover {
+  background-color: #475569; /* slate-600 */
+  border-color: #64748b; /* slate-500 */
+}
+
+/* Botão ativo (Mês, Semana, etc.) */
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: var(--fc-event-bg-color);
+  border-color: var(--fc-event-bg-color);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.3);
+}
+
+/* Corpo do calendário */
+.fc-theme-standard .fc-scrollgrid {
+  border-radius: 0.75rem; /* 12px */
+  overflow: hidden;
+}
+
+/* Cabeçalho dos dias da semana (dom, seg, ter...) */
+.fc .fc-col-header-cell-cushion {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #94a3b8; /* slate-400 */
+  padding: 0.75rem 0;
+}
+
+/* Células dos dias */
+.fc .fc-daygrid-day-frame {
+  transition: background-color 0.2s ease;
+  min-height: 100px; /* Garante uma altura mínima para as células */
+}
+
+.fc .fc-daygrid-day-frame:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* Número do dia */
+.fc .fc-daygrid-day-number {
+  color: #cbd5e1; /* slate-300 */
+  font-weight: 500;
+  padding: 0.5em;
+}
+
+/* Dia de hoje ("Today") */
+.fc .fc-day-today {
+  background-color: var(--fc-today-bg-color);
+  border-top: 2px solid var(--fc-event-bg-color);
+}
+.fc .fc-day-today .fc-daygrid-day-number {
+  font-weight: 700;
+  color: #f1f5f9; /* slate-100 */
+}
+
+/* Eventos (Postagens) */
+.fc-direction-ltr .fc-daygrid-event.fc-event-start,
+.fc-direction-rtl .fc-daygrid-event.fc-event-end {
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-weight: 600;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(to right, #a78bfa, #8b5cf6); /* Gradiente roxo */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fc-daygrid-event:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.fc-event-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* =============================================== */
+/* OCULTAR A BARRA DE SCROLL DO CALENDÁRIO         */
+/* =============================================== */
+
+/* Alvo: a área de rolagem do FullCalendar */
+.fc-scroller {
+  /* Para Firefox */
+  scrollbar-width: none;
+  /* Para Internet Explorer e Edge legado */
+  -ms-overflow-style: none;
+}
+
+/* Para navegadores baseados em WebKit (Chrome, Safari, Edge moderno, Opera) */
+.fc-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+/* =============================================== */
+/* NOVOS ESTILOS PARA O KANBAN (DRAG & DROP)       */
+/* =============================================== */
+
+/* Estilo para o card que está sendo arrastado */
+.draggable.dragging {
+  opacity: 0.4;
+  transform: scale(1.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilo para a coluna que está recebendo o card */
+.droppable.drag-over {
+  background-color: #374151; /* gray-700 */
+  border: 2px dashed #8b5cf6; /* purple-500 */
+  border-radius: 0.75rem; /* 12px */
+}
+
+/* =============================================== */
+/* SCROLLBAR DISCRETO E MODERNO PARA O KANBAN      */
+/* =============================================== */
+
+/* Alvo: A div com a classe .overflow-x-auto dentro do #kanban-board */
+#kanban-board .overflow-x-auto::-webkit-scrollbar {
+  height: 8px; /* Altura da barra de rolagem */
+}
+
+/* Fundo da barra de rolagem (o trilho) */
+#kanban-board .overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent; /* Fundo transparente para se mesclar */
   border-radius: 10px;
 }
 
-#kanban-board::-webkit-scrollbar-thumb {
-  background: #4b5563; /* gray-600 */
+/* A parte que você arrasta (o polegar) */
+#kanban-board .overflow-x-auto::-webkit-scrollbar-thumb {
+  background: #4b5563; /* Um cinza médio (gray-600) */
   border-radius: 10px;
+  border: 2px solid #1f2937; /* Borda da cor do fundo para criar um efeito de "flutuação" */
 }
 
-#kanban-board::-webkit-scrollbar-thumb:hover {
-  background: #6b7280; /* gray-500 */
-}
-
-/* NOVAS ANIMAÇÕES GLOBAIS */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideInUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-@keyframes scaleIn {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-}
-
-.slide-in-up {
-    animation: slideInUp 0.5s ease-out forwards;
-}
-
-.scale-in {
-    animation: scaleIn 0.3s ease-out forwards;
-}
-
-/* Animação com delay para elementos em sequência */
-.stagger-1 { animation-delay: 100ms; }
-.stagger-2 { animation-delay: 200ms; }
-.stagger-3 { animation-delay: 300ms; }
-.stagger-4 { animation-delay: 400ms; }
-
-/* Para garantir que os elementos animados comecem invisíveis */
-.animated {
-    opacity: 0;
+/* Efeito ao passar o mouse sobre a barra */
+#kanban-board .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* Cinza um pouco mais claro (gray-500) */
 }

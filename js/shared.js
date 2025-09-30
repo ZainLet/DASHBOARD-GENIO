@@ -1,7 +1,8 @@
 import { handleLogout } from './auth.js';
 
 export function createPageUrl(pageName) {
-    if (pageName === 'index') {
+    // Corrige o link para a página inicial, caso seja 'index' ou a raiz.
+    if (pageName === 'index' || pageName === '') {
         return '/index.html';
     }
     return `/${pageName.toLowerCase()}.html`;
@@ -22,6 +23,11 @@ const navigationItems = [
         title: "CRM Pipeline",
         url: createPageUrl("crm"),
         icon: 'git-branch',
+    },
+    {
+        title: "Testes A/B",
+        url: createPageUrl("ab-testing"),
+        icon: 'beaker',
     },
     {
         title: "Farm de Perfis",
@@ -101,6 +107,8 @@ export function renderLayout(user, pageContent) {
             </header>
             <div class="flex-1 overflow-auto" id="app-content">
                 </div>
+            
+            <div id="modal-container"></div>
         </main>
     `;
 
